@@ -1,4 +1,4 @@
-<!-- StudentForm.vue -->
+<!-- modules/student/pages/StudentForm.vue -->
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -16,7 +16,7 @@ const student = ref<Student>({
   gender: null,
   class: null,
   section: null,
-  status: 'active',
+  status: null,
   contact: null,
 });
 

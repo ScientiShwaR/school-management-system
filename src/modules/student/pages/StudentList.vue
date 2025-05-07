@@ -1,4 +1,4 @@
-<!-- StudentList.vue -->
+<!-- modules/student/pages/StudentList.vue -->
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useStudentStore } from '@/modules/student/store';

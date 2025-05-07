@@ -9,12 +9,12 @@ export interface Student {
     phone: string | null;
     email: string | null;
     address: string | null;
-  };
+  } | null;
   guardian: {
     name: string | null;
     phone: string | null;
     relation: string | null;
-  };
+  } | null;
   admissionDate: string | null;
   status: 'Active' | 'Inactive' | 'Transferred' | 'Left' | null;
   classId: string | null;     // Reference to Class (can be null if unassigned)
