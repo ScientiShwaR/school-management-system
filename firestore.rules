@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function getUserRole(uid) {
+      let userDoc = /databases/$(database)/documents/users/$(uid);
+      return exists(userDoc) ? get(userDoc).data.role : null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUserRole(request.auth.uid) == 'admin';
+    }
+
+    function isAdminOrManager() {
+      return isAuthenticated() && getUserRole(request.auth.uid) in ['admin', 'manager'];
+    }
+
+    function hasValidUserFields() {
+      return request.resource.data.keys().hasAll(['email', 'fullname', 'role', 'createdAt']) &&
+             request.resource.data.keys().hasOnly(['email', 'fullname', 'role', 'createdAt', 'updatedAt', 'photoURL']) &&
+             request.resource.data.email is string &&
+             request.resource.data.fullname is string &&
+             request.resource.data.role in ['user', 'manager', 'admin'] &&
+             request.resource.data.createdAt is string &&
+             (!('updatedAt' in request.resource.data) || request.resource.data.updatedAt is string) &&
+             (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isUser(userId) || isAdminOrManager();
+      allow create: if isAuthenticated() && hasValidUserFields() && (isUser(userId) || isAdmin());
+      allow update: if isAuthenticated() && (
+        (isUser(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullname', 'photoURL', 'updatedAt'])) ||
+        (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullname', 'role', 'photoURL', 'updatedAt']))
+      );
+      allow delete: if isAdmin() && !isUser(userId);
+    }
+
+    match /stats/users {
+      allow read: if isAdminOrManager();
+      allow write: if isAdmin();
+    }
+  }
+}
